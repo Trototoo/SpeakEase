@@ -81,4 +81,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         setUserOnlineStatus()
     }
+
+    override fun onPause() {
+        super.onPause()
+        val currentId = FirebaseAuth.getInstance().uid!!
+        database.reference.child("presence")
+            .child(currentId)
+            .setValue("Offline")
+    }
 }
