@@ -131,4 +131,14 @@ class ChatActivity : AppCompatActivity() {
         }
         startActivityForResult(intent, 25)
     }
+
+    override fun onResume() {
+        super.onResume()
+        database.reference.child(USER_PRESENCE).child(FirebaseAuth.getInstance().uid!!).setValue("Online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        database.reference.child(USER_PRESENCE).child(FirebaseAuth.getInstance().uid!!).setValue("Offline")
+    }
 }
