@@ -76,4 +76,9 @@ class MainActivity : AppCompatActivity() {
         database.reference.child("presence").child(currentId)
             .setValue("Online")
     }
+
+    override fun onResume() {
+        super.onResume()
+        setUserOnlineStatus()
+    }
 }
