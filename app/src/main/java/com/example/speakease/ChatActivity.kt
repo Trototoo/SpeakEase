@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.speakease.Constants.CHATS
+import com.example.speakease.Constants.MESSAGE
 import com.example.speakease.Constants.USER_PRESENCE
 import com.example.speakease.adapter.MessagesAdapter
 import com.example.speakease.databinding.ActivityChatBinding
@@ -69,6 +71,23 @@ class ChatActivity : AppCompatActivity() {
                         binding.status.text = status
                         binding.status.visibility = if (status == "Offline") View.GONE else View.VISIBLE
                     }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun fetchAndSetChatMessages() {
+        database.reference.child(CHATS).child(senderRoom).child(MESSAGE)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    messages.clear()
+                    for (snapshot1 in snapshot.children) {
+                        val message = snapshot1.getValue(Message::class.java)!!
+                        message.messageId = snapshot1.key
+                        messages.add(message)
+                    }
+                    adapter.notifyDataSetChanged()
                 }
 
                 override fun onCancelled(error: DatabaseError) {}
