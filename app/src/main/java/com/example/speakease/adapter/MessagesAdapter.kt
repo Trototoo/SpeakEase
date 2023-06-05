@@ -62,6 +62,7 @@ class MessagesAdapter(
         if (message.message == MESSAGE_PHOTO) {
             binding.image.visibility = View.VISIBLE
             binding.message.visibility = View.GONE
+            binding.mLinear.visibility = View.GONE
             Glide.with(context)
                 .load(message.imageUrl)
                 .placeholder(R.drawable.placeholder)
@@ -82,6 +83,7 @@ class MessagesAdapter(
         if (message.message == MESSAGE_PHOTO) {
             binding.image.visibility = View.VISIBLE
             binding.message.visibility = View.GONE
+            binding.mLinear.visibility = View.GONE
             Glide.with(context)
                 .load(message.imageUrl)
                 .placeholder(R.drawable.placeholder)
