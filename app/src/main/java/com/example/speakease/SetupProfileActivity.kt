@@ -10,6 +10,7 @@ import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
+import java.util.Date
 
 class SetupProfileActivity : AppCompatActivity() {
 
@@ -23,6 +24,12 @@ class SetupProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_setup_profile)
+    }
+
+    private fun initFirebase() {
+        auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
+        storage = FirebaseStorage.getInstance()
     }
 
     private fun setupUI() {
@@ -90,16 +97,37 @@ class SetupProfileActivity : AppCompatActivity() {
             }
     }
 
-    private fun initFirebase() {
-        auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance()
-        storage = FirebaseStorage.getInstance()
-    }
-
     private fun navigateToMainActivity() {
         Intent(this, MainActivity::class.java).also {
             startActivity(it)
             finish()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (data != null && data.data != null) {
+            val uri = data.data
+            val reference = storage.reference
+                .child("Profile")
+                .child("${Date().time} ")
+
+            reference.putFile(uri!!).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    reference.downloadUrl.addOnCompleteListener { uri ->
+                        val filePath = uri.toString()
+                        val obj = HashMap<String, Any>()
+                        obj["image"] = filePath
+                        database.reference
+                            .child("users")
+                            .child(auth.uid!!)
+                            .updateChildren(obj)
+                    }
+                }
+            }
+            binding.imageView.setImageURI(data.data)
+            selectedImage = data.data
         }
     }
 }
