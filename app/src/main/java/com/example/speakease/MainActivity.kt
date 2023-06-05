@@ -3,6 +3,8 @@ package com.example.speakease
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.speakease.adapter.UserAdapter
 import com.example.speakease.databinding.ActivityMainBinding
 import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
@@ -16,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var database: FirebaseDatabase
     private lateinit var users: ArrayList<User>
+    private lateinit var usersAdapter: UserAdapter
     private lateinit var dialog: ProgressDialog
     private lateinit var user: User
 
@@ -47,5 +50,24 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onCancelled(error: DatabaseError) {}
             })
+    }
+
+    private fun setupUsersList() {
+        usersAdapter = UserAdapter(users)
+        binding.mRec.layoutManager = GridLayoutManager(this, 2)
+        binding.mRec.adapter = usersAdapter
+
+        database.reference.child("users").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                users.clear()
+                for (snapshot1 in snapshot.children) {
+                    val user: User = snapshot1.getValue(User::class.java)!!
+                    if (user.uid != FirebaseAuth.getInstance().uid) users.add(user)
+                }
+                usersAdapter.notifyDataSetChanged()
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 }
