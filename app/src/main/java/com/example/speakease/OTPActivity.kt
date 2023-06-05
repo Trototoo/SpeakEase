@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import com.example.speakease.Constants.USERS_PATH
 import com.example.speakease.databinding.ActivityOtpactivityBinding
 import com.example.speakease.model.User
 import com.google.firebase.FirebaseException
@@ -100,7 +101,7 @@ class OTPActivity : AppCompatActivity() {
 
     private fun checkUserProfile() {
         val userId = auth.currentUser?.uid ?: return
-        val database = FirebaseDatabase.getInstance().getReference("users")
+        val database = FirebaseDatabase.getInstance().getReference(USERS_PATH)
         val userRef = database.child(userId)
 
         userRef.addListenerForSingleValueEvent(object : ValueEventListener {

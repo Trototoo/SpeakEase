@@ -5,6 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.example.speakease.Constants.IMAGE_PICK_REQUEST_CODE
+import com.example.speakease.Constants.PROFILE_PATH
+import com.example.speakease.Constants.USERS_PATH
 import com.example.speakease.databinding.ActivitySetupProfileBinding
 import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
@@ -49,7 +52,7 @@ class SetupProfileActivity : AppCompatActivity() {
                 action = Intent.ACTION_GET_CONTENT
                 type = "image/*"
             }
-            startActivityForResult(intent, 45)
+            startActivityForResult(intent, IMAGE_PICK_REQUEST_CODE)
         }
 
         binding.continueBtn02.setOnClickListener { updateProfile() }
@@ -72,7 +75,7 @@ class SetupProfileActivity : AppCompatActivity() {
     }
 
     private fun uploadImageToFirebase(uri: Uri, name: String) {
-        val reference = storage.reference.child("Profile").child(auth.uid!!)
+        val reference = storage.reference.child(PROFILE_PATH).child(auth.uid!!)
         reference.putFile(uri).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 reference.downloadUrl.addOnCompleteListener { downloadUrlTask ->
@@ -92,7 +95,7 @@ class SetupProfileActivity : AppCompatActivity() {
         val phone = auth.currentUser?.phoneNumber
         val user = User(uid!!, name, phone, imageUrl)
         database.reference
-            .child("users")
+            .child(USERS_PATH)
             .child(uid)
             .setValue(user)
             .addOnCompleteListener {
@@ -114,7 +117,7 @@ class SetupProfileActivity : AppCompatActivity() {
         if (data != null && data.data != null) {
             val uri = data.data
             val reference = storage.reference
-                .child("Profile")
+                .child(PROFILE_PATH)
                 .child("${Date().time} ")
 
             reference.putFile(uri!!).addOnCompleteListener { task ->
@@ -124,7 +127,7 @@ class SetupProfileActivity : AppCompatActivity() {
                         val obj = HashMap<String, Any>()
                         obj["image"] = filePath
                         database.reference
-                            .child("users")
+                            .child(USERS_PATH)
                             .child(auth.uid!!)
                             .updateChildren(obj)
                     }
