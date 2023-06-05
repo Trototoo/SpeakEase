@@ -4,6 +4,9 @@ import android.app.ProgressDialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.speakease.Constants.CHATS
@@ -62,6 +65,22 @@ class ChatActivity : AppCompatActivity() {
         binding.recyclerView.adapter = adapter
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
+
+    private fun createTextWatcher(): TextWatcher {
+        val handler = Handler()
+
+        return object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                database.reference.child(USER_PRESENCE).child(senderUid).setValue("Typing...")
+                handler.removeCallbacksAndMessages(null)
+                handler.postDelayed({ database.reference.child(USER_PRESENCE).child(senderUid).setValue("Online") }, 1000)
+            }
+        }
     }
 
     private fun setPresenceStatus() {
