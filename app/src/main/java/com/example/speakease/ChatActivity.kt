@@ -17,6 +17,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import java.util.Date
 
 class ChatActivity : AppCompatActivity() {
 
@@ -92,5 +93,33 @@ class ChatActivity : AppCompatActivity() {
 
                 override fun onCancelled(error: DatabaseError) {}
             })
+    }
+
+    private fun sendMessage() {
+        var messageTxt = binding.messageBox.text.toString()
+
+        if (messageTxt.isEmpty()) {
+            return
+        }
+
+        messageTxt = messageTxt.trimEnd('\n')
+
+        val date = Date()
+        val message = Message(messageTxt, senderUid, date.time)
+
+        binding.messageBox.setText("")
+
+        val randomKey = database.reference.push().key!!
+        val lastMsgObj = mapOf("lastMsg" to message.message!!, "lastMsgTime" to date.time)
+
+        database.reference.child(CHATS).child(senderRoom).updateChildren(lastMsgObj)
+        database.reference.child(CHATS).child(receiverRoom).updateChildren(lastMsgObj)
+
+        database.reference.child(CHATS).child(senderRoom).child(MESSAGE).child(randomKey)
+            .setValue(message)
+            .addOnSuccessListener {
+                database.reference.child(CHATS).child(receiverRoom).child(MESSAGE).child(randomKey)
+                    .setValue(message)
+            }
     }
 }
