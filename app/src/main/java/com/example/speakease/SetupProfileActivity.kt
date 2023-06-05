@@ -1,7 +1,10 @@
 package com.example.speakease
 
+import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
@@ -21,5 +24,12 @@ class SetupProfileActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
         storage = FirebaseStorage.getInstance()
+    }
+
+    private fun navigateToMainActivity() {
+        Intent(this, MainActivity::class.java).also {
+            startActivity(it)
+            finish()
+        }
     }
 }
