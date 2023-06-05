@@ -4,6 +4,8 @@ import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.speakease.Constants.USERS_PATH
+import com.example.speakease.Constants.USER_PRESENCE
 import com.example.speakease.adapter.UserAdapter
 import com.example.speakease.databinding.ActivityMainBinding
 import com.example.speakease.model.User
@@ -21,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var usersAdapter: UserAdapter
     private lateinit var dialog: ProgressDialog
     private lateinit var user: User
+    private lateinit var currentUserId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,10 +45,10 @@ class MainActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance()
         users = ArrayList()
 
-        val currentUserUid = FirebaseAuth.getInstance().uid!!
+        currentUserId = FirebaseAuth.getInstance().uid!!
 
-        database.reference.child("users")
-            .child(currentUserUid)
+        database.reference.child(USERS_PATH)
+            .child(currentUserId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     user = snapshot.getValue(User::class.java)!!
@@ -60,11 +63,11 @@ class MainActivity : AppCompatActivity() {
         binding.mRec.layoutManager = GridLayoutManager(this, 2)
         binding.mRec.adapter = usersAdapter
 
-        database.reference.child("users").addValueEventListener(object : ValueEventListener {
+        database.reference.child(USERS_PATH).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 users.clear()
-                for (snapshot1 in snapshot.children) {
-                    val user: User = snapshot1.getValue(User::class.java)!!
+                for (userSnapshot in snapshot.children) {
+                    val user: User = userSnapshot.getValue(User::class.java)!!
                     if (user.uid != FirebaseAuth.getInstance().uid) users.add(user)
                 }
                 usersAdapter.notifyDataSetChanged()
@@ -75,8 +78,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUserOnlineStatus() {
-        val currentId = FirebaseAuth.getInstance().uid!!
-        database.reference.child("presence").child(currentId)
+        database.reference.child(USER_PRESENCE).child(currentUserId)
             .setValue("Online")
     }
 
@@ -87,9 +89,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        val currentId = FirebaseAuth.getInstance().uid!!
-        database.reference.child("presence")
-            .child(currentId)
+        database.reference.child(USER_PRESENCE)
+            .child(currentUserId)
             .setValue("Offline")
     }
 }
