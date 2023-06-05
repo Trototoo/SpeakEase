@@ -22,6 +22,22 @@ class SetupProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup_profile)
     }
 
+    private fun uploadImageToFirebase(uri: Uri, name: String) {
+        val reference = storage.reference.child("Profile").child(auth.uid!!)
+        reference.putFile(uri).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                reference.downloadUrl.addOnCompleteListener { downloadUrlTask ->
+                    if (downloadUrlTask.isSuccessful) {
+                        val downloadUri = downloadUrlTask.result
+                        val imageUrl = downloadUri.toString()
+
+                        saveUserToFirebase(name, imageUrl)
+                    }
+                }
+            }
+        }
+    }
+
     private fun saveUserToFirebase(name: String, imageUrl: String) {
         val uid = auth.uid
         val phone = auth.currentUser?.phoneNumber
