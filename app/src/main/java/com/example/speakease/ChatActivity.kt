@@ -39,7 +39,6 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var dialog: ProgressDialog
     private lateinit var senderUid: String
     private lateinit var receiverUid: String
-    private lateinit var currentUserId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +62,7 @@ class ChatActivity : AppCompatActivity() {
         messages = ArrayList()
 
         receiverUid = intent.getStringExtra("uid")!!
-        currentUserId = FirebaseAuth.getInstance().uid!!
+        senderUid = FirebaseAuth.getInstance().uid!!
 
         senderRoom = senderUid + receiverUid
         receiverRoom = receiverUid + senderUid
@@ -179,12 +178,12 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        database.reference.child(USER_PRESENCE).child(currentUserId).setValue("Online")
+        database.reference.child(USER_PRESENCE).child(senderUid).setValue("Online")
     }
 
     override fun onPause() {
         super.onPause()
-        database.reference.child(USER_PRESENCE).child(currentUserId).setValue("Offline")
+        database.reference.child(USER_PRESENCE).child(senderUid).setValue("Offline")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
