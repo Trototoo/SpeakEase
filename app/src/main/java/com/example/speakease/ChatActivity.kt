@@ -3,12 +3,17 @@ package com.example.speakease
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.speakease.Constants.USER_PRESENCE
 import com.example.speakease.adapter.MessagesAdapter
 import com.example.speakease.databinding.ActivityChatBinding
 import com.example.speakease.model.Message
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 
 class ChatActivity : AppCompatActivity() {
@@ -53,5 +58,20 @@ class ChatActivity : AppCompatActivity() {
         binding.recyclerView.adapter = adapter
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
+
+    private fun setPresenceStatus() {
+        database.reference.child(USER_PRESENCE).child(receiverUid)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val status = snapshot.getValue(String::class.java)
+                        binding.status.text = status
+                        binding.status.visibility = if (status == "Offline") View.GONE else View.VISIBLE
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 }
