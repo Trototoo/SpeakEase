@@ -8,30 +8,51 @@ import com.google.firebase.auth.FirebaseAuth
 
 class VerificationActivity : AppCompatActivity() {
 
-    var binding : ActivityVerificationBinding? = null
-
-    var auth: FirebaseAuth? = null
+    private lateinit var binding: ActivityVerificationBinding
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVerificationBinding.inflate(layoutInflater)
-        setContentView(binding!!.root)
+        setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
 
-        if (auth!!.currentUser != null) {
-            val intent = Intent(this@VerificationActivity, MainActivity::class.java)
-            startActivity(intent)
+        checkIfUserIsAlreadyLogged()
+        hideActionBar()
+        setContinueButtonOnClick()
+    }
+
+    private fun checkIfUserIsAlreadyLogged() {
+        if (auth.currentUser != null) {
+            navigateToMainActivity()
+        } else {
+            binding.editNumber.requestFocus()
+        }
+    }
+
+    private fun hideActionBar() {
+        supportActionBar?.hide()
+    }
+
+    private fun setContinueButtonOnClick() {
+        binding.continueBtn.setOnClickListener {
+            val phoneNumber = binding.editNumber.text.toString()
+            navigateToOTPActivity(phoneNumber)
+        }
+    }
+
+    private fun navigateToMainActivity() {
+        Intent(this, MainActivity::class.java).also {
+            startActivity(it)
             finish()
         }
+    }
 
-        supportActionBar?.hide()
-
-        binding!!.editNumber.requestFocus()
-        binding!!.continueBtn.setOnClickListener {
-            val intent = Intent(this@VerificationActivity, OTPActivity::class.java)
-            intent.putExtra("phoneNumber", binding!!.editNumber.text.toString())
-            startActivity(intent)
+    private fun navigateToOTPActivity(phoneNumber: String) {
+        Intent(this, OTPActivity::class.java).also {
+            it.putExtra("phoneNumber", phoneNumber)
+            startActivity(it)
         }
     }
 }
