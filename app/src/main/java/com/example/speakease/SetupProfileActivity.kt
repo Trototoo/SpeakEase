@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.example.speakease.databinding.ActivitySetupProfileBinding
 import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -12,14 +13,32 @@ import com.google.firebase.storage.FirebaseStorage
 
 class SetupProfileActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivitySetupProfileBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
     private lateinit var storage: FirebaseStorage
     private lateinit var dialog: ProgressDialog
+    private var selectedImage: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_setup_profile)
+    }
+
+    private fun updateProfile() {
+        val name = binding.nameBox.text.toString()
+        if (name.isEmpty()) {
+            binding.nameBox.error = "Please type your name"
+            return
+        }
+
+        dialog.show()
+
+        selectedImage?.let {
+            uploadImageToFirebase(it, name)
+        } ?: run {
+            saveUserToFirebase(name, "No Image")
+        }
     }
 
     private fun uploadImageToFirebase(uri: Uri, name: String) {
