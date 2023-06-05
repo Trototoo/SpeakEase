@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.speakease.Constants.CHATS
 import com.example.speakease.Constants.MESSAGE
+import com.example.speakease.Constants.MESSAGE_PHOTO
 import com.example.speakease.Constants.USER_PRESENCE
 import com.example.speakease.adapter.MessagesAdapter
 import com.example.speakease.databinding.ActivityChatBinding
@@ -22,6 +23,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import java.util.Calendar
 import java.util.Date
 
 class ChatActivity : AppCompatActivity() {
@@ -181,5 +183,48 @@ class ChatActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         database.reference.child(USER_PRESENCE).child(FirebaseAuth.getInstance().uid!!).setValue("Offline")
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 25 && resultCode == RESULT_OK) {
+            val selectedImage = data?.data ?: return
+
+            val reference = storage.reference.child(CHATS)
+                .child(Calendar.getInstance().timeInMillis.toString())
+
+            dialog.show()
+
+            reference.putFile(selectedImage).addOnCompleteListener { task ->
+                dialog.dismiss()
+
+                if (task.isSuccessful) {
+                    reference.downloadUrl.addOnSuccessListener { uri ->
+                        val filePath = uri.toString()
+
+                        val date = Date()
+                        val message = Message(MESSAGE_PHOTO, senderUid, date.time).apply {
+                            imageUrl = filePath
+                        }
+
+                        binding.messageBox.setText("")
+
+                        val randomKey = database.reference.push().key ?: return@addOnSuccessListener
+
+                        val lastMsgObj = mapOf("lastMsg" to message.message, "lastMsgTime" to date.time)
+
+                        database.reference.child(CHATS).updateChildren(lastMsgObj)
+                        database.reference.child(CHATS).child(receiverRoom).updateChildren(lastMsgObj)
+
+                        database.reference.child(CHATS).child(senderRoom).child(MESSAGE).child(randomKey)
+                            .setValue(message).addOnSuccessListener {
+                                database.reference.child(CHATS).child(receiverRoom).child(MESSAGE).child(randomKey)
+                                    .setValue(message)
+                            }
+                    }
+                }
+            }
+        }
     }
 }
