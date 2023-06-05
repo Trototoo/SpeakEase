@@ -13,7 +13,13 @@
         android:theme="@style/Theme.SpeakEase"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".SetupProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OTPActivity"
+            android:exported="false" />
+        <activity
+            android:name=".VerificationActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

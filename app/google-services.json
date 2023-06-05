@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "286255556262",
+    "project_id": "speakease-cf85f",
+    "storage_bucket": "speakease-cf85f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:286255556262:android:1720022c50f352bcd8b667",
+        "android_client_info": {
+          "package_name": "com.example.speakease"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "286255556262-qqt7o4k2b3uh82266gf654hrp7g05dij.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1UFJ4iB3jCUjrIMbu71gPv1danO6MrCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "286255556262-qqt7o4k2b3uh82266gf654hrp7g05dij.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
