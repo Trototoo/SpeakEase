@@ -1,6 +1,7 @@
 package com.example.speakease
 
 import android.app.ProgressDialog
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -121,5 +122,13 @@ class ChatActivity : AppCompatActivity() {
                 database.reference.child(CHATS).child(receiverRoom).child(MESSAGE).child(randomKey)
                     .setValue(message)
             }
+    }
+
+    private fun pickImage() {
+        val intent = Intent().apply {
+            action = Intent.ACTION_GET_CONTENT
+            type = "image/*"
+        }
+        startActivityForResult(intent, 25)
     }
 }
