@@ -11,6 +11,7 @@ import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.speakease.Constants.CHATS
+import com.example.speakease.Constants.IMAGE_PICK_REQUEST_CODE_CHAT
 import com.example.speakease.Constants.MESSAGE
 import com.example.speakease.Constants.MESSAGE_PHOTO
 import com.example.speakease.Constants.USER_PRESENCE
@@ -173,7 +174,7 @@ class ChatActivity : AppCompatActivity() {
             action = Intent.ACTION_GET_CONTENT
             type = "image/*"
         }
-        startActivityForResult(intent, 25)
+        startActivityForResult(intent, IMAGE_PICK_REQUEST_CODE_CHAT)
     }
 
     override fun onResume() {
@@ -189,7 +190,7 @@ class ChatActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == 25 && resultCode == RESULT_OK) {
+        if (requestCode == IMAGE_PICK_REQUEST_CODE_CHAT && resultCode == RESULT_OK) {
             val selectedImage = data?.data ?: return
 
             val reference = storage.reference.child(CHATS)
