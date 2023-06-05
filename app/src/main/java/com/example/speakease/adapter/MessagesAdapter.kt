@@ -5,6 +5,9 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.speakease.Constants.CHATS
@@ -58,20 +61,26 @@ class MessagesAdapter(
         }
     }
 
-    private fun setupSentMessage(binding: SendMsgBinding, message: Message) {
+    private fun setupMessageView(message: Message, messageView: TextView, imageView: ImageView, mLinear: LinearLayout) {
         if (message.message == MESSAGE_PHOTO) {
-            binding.image.visibility = View.VISIBLE
-            binding.message.visibility = View.GONE
-            binding.mLinear.visibility = View.GONE
+            imageView.visibility = View.VISIBLE
+            messageView.visibility = View.GONE
+            mLinear.visibility = View.GONE
             Glide.with(context)
                 .load(message.imageUrl)
                 .placeholder(R.drawable.placeholder)
-                .into(binding.image)
+                .into(imageView)
         } else {
-            binding.image.visibility = View.GONE
-            binding.message.visibility = View.VISIBLE
-            binding.message.text = message.message
+            imageView.visibility = View.GONE
+            messageView.visibility = View.VISIBLE
+            messageView.text = message.message
+            mLinear.visibility = View.VISIBLE
         }
+    }
+
+
+    private fun setupSentMessage(binding: SendMsgBinding, message: Message) {
+        setupMessageView(message, binding.message, binding.image, binding.mLinear)
 
         binding.root.setOnLongClickListener {
             showDeleteDialog(message)
@@ -80,25 +89,14 @@ class MessagesAdapter(
     }
 
     private fun setupReceivedMessage(binding: ReceiveMsgBinding, message: Message) {
-        if (message.message == MESSAGE_PHOTO) {
-            binding.image.visibility = View.VISIBLE
-            binding.message.visibility = View.GONE
-            binding.mLinear.visibility = View.GONE
-            Glide.with(context)
-                .load(message.imageUrl)
-                .placeholder(R.drawable.placeholder)
-                .into(binding.image)
-        } else {
-            binding.image.visibility = View.GONE
-            binding.message.visibility = View.VISIBLE
-            binding.message.text = message.message
-        }
+        setupMessageView(message, binding.message, binding.image, binding.mLinear)
 
         binding.root.setOnLongClickListener {
             showDeleteDialog(message)
             false
         }
     }
+
 
     private fun showDeleteDialog(message: Message) {
         val view = LayoutInflater.from(context)
