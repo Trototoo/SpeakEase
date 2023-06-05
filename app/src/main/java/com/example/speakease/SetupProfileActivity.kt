@@ -25,6 +25,25 @@ class SetupProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup_profile)
     }
 
+    private fun setupUI() {
+        supportActionBar?.hide()
+
+        dialog = ProgressDialog(this).apply {
+            setMessage("Updating Profile...")
+            setCancelable(false)
+        }
+
+        binding.imageView.setOnClickListener {
+            val intent = Intent().apply {
+                action = Intent.ACTION_GET_CONTENT
+                type = "image/*"
+            }
+            startActivityForResult(intent, 45)
+        }
+
+        binding.continueBtn02.setOnClickListener { updateProfile() }
+    }
+
     private fun updateProfile() {
         val name = binding.nameBox.text.toString()
         if (name.isEmpty()) {
