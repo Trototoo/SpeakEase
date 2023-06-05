@@ -7,6 +7,10 @@ android {
     namespace 'com.example.speakease'
     compileSdk 33
 
+    buildFeatures {
+        viewBinding true
+    }
+
     defaultConfig {
         applicationId "com.example.speakease"
         minSdk 24
