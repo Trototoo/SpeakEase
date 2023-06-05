@@ -70,4 +70,10 @@ class MainActivity : AppCompatActivity() {
             override fun onCancelled(error: DatabaseError) {}
         })
     }
+
+    private fun setUserOnlineStatus() {
+        val currentId = FirebaseAuth.getInstance().uid!!
+        database.reference.child("presence").child(currentId)
+            .setValue("Online")
+    }
 }
