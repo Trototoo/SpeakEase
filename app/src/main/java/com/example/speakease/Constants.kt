@@ -5,4 +5,7 @@ object Constants {
     const val PROFILE_PATH = "Profile"
     const val USERS_PATH = "users"
     const val USER_PRESENCE = "presence"
+    const val MESSAGE_PHOTO = "photo"
+    const val MESSAGE = "message"
+    const val CHATS = "chats"
 }
