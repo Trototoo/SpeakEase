@@ -9,6 +9,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.example.speakease.Constants.CHATS
 import com.example.speakease.Constants.MESSAGE
 import com.example.speakease.Constants.USER_PRESENCE
@@ -65,6 +66,24 @@ class ChatActivity : AppCompatActivity() {
         binding.recyclerView.adapter = adapter
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
+
+    private fun setupViewElements() {
+        val nameText = intent.getStringExtra("name")
+        val profile = intent.getStringExtra("image")
+
+        binding.apply {
+            name.text = nameText
+            Glide.with(this@ChatActivity).load(profile)
+                .placeholder(R.drawable.placeholder)
+                .into(profile01)
+            imageView2.setOnClickListener { finish() }
+            sendBtn.setOnClickListener { sendMessage() }
+            attachment.setOnClickListener { pickImage() }
+            messageBox.addTextChangedListener(createTextWatcher())
+        }
+
+        setPresenceStatus()
     }
 
     private fun createTextWatcher(): TextWatcher {
