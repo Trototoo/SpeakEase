@@ -13,6 +13,7 @@ import com.example.speakease.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import java.util.Date
 
 class SetupProfileActivity : AppCompatActivity() {
@@ -58,6 +59,20 @@ class SetupProfileActivity : AppCompatActivity() {
         binding.continueBtn02.setOnClickListener { updateProfile() }
     }
 
+    private fun uploadImage(reference: StorageReference, uri: Uri, onSuccess: (String) -> Unit) {
+        reference.putFile(uri).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                reference.downloadUrl.addOnCompleteListener { downloadUrlTask ->
+                    if (downloadUrlTask.isSuccessful) {
+                        val downloadUri = downloadUrlTask.result
+                        val imageUrl = downloadUri.toString()
+                        onSuccess(imageUrl)
+                    }
+                }
+            }
+        }
+    }
+
     private fun updateProfile() {
         val name = binding.nameBox.text.toString()
         if (name.isEmpty()) {
@@ -68,25 +83,12 @@ class SetupProfileActivity : AppCompatActivity() {
         dialog.show()
 
         selectedImage?.let {
-            uploadImageToFirebase(it, name)
+            val reference = storage.reference.child(PROFILE_PATH).child(auth.uid!!)
+            uploadImage(reference, it) { imageUrl ->
+                saveUserToFirebase(name, imageUrl)
+            }
         } ?: run {
             saveUserToFirebase(name, "No Image")
-        }
-    }
-
-    private fun uploadImageToFirebase(uri: Uri, name: String) {
-        val reference = storage.reference.child(PROFILE_PATH).child(auth.uid!!)
-        reference.putFile(uri).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                reference.downloadUrl.addOnCompleteListener { downloadUrlTask ->
-                    if (downloadUrlTask.isSuccessful) {
-                        val downloadUri = downloadUrlTask.result
-                        val imageUrl = downloadUri.toString()
-
-                        saveUserToFirebase(name, imageUrl)
-                    }
-                }
-            }
         }
     }
 
@@ -114,24 +116,19 @@ class SetupProfileActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (data != null && data.data != null) {
-            val uri = data.data
+        if (requestCode == IMAGE_PICK_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.data != null) {
+            val uri = data.data!!
             val reference = storage.reference
                 .child(PROFILE_PATH)
-                .child("${Date().time} ")
+                .child("${Date().time}")
 
-            reference.putFile(uri!!).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    reference.downloadUrl.addOnCompleteListener { uri ->
-                        val filePath = uri.toString()
-                        val obj = HashMap<String, Any>()
-                        obj["image"] = filePath
-                        database.reference
-                            .child(USERS_PATH)
-                            .child(auth.uid!!)
-                            .updateChildren(obj)
-                    }
-                }
+            uploadImage(reference, uri) { imageUrl ->
+                val obj = HashMap<String, Any>()
+                obj["image"] = imageUrl
+                database.reference
+                    .child(USERS_PATH)
+                    .child(auth.uid!!)
+                    .updateChildren(obj)
             }
             binding.imageView.setImageURI(data.data)
             selectedImage = data.data
