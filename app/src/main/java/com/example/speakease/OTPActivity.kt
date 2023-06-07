@@ -67,7 +67,8 @@ class OTPActivity : AppCompatActivity() {
                 }
 
                 override fun onVerificationFailed(p0: FirebaseException) {
-                    // TODO("Not yet implemented")
+                    dialog.dismiss()
+                    Toast.makeText(this@OTPActivity, "No number in database", Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onCodeSent(
