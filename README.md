@@ -1,6 +1,6 @@
 # SpeakEase Project
 
-AnswerAndQuestions is a platform for coworkers for easier interaction with each other. The app integrates with Firebase for user authentication, data storage, and image storage.
+SpeakEase is a platform for coworkers for easier interaction with each other. The app integrates with Firebase for user authentication, data storage, and image storage.
 
 ## Prerequisites
 
