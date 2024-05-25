@@ -38,25 +38,3 @@ This will create a release APK in the `app/build/outputs/apk/release` directory.
 gradlew.bat assembleRelease
 ```
 This will create a release APK in the `app/build/outputs/apk/release` directory.
-
-Design dock [link](https://docs.google.com/document/d/1SyPeaQfzdZvE_FXpkKBl3Ho8GOtqQJzNGNXCG_ufPlA/edit).
-
-Code reviews made for me:
-
-https://github.com/Trototoo/SpeakEase/pull/1
-
-https://github.com/Trototoo/SpeakEase/pull/2
-
-https://github.com/Trototoo/SpeakEase/pull/3
-
-https://github.com/Trototoo/SpeakEase/pull/4
-
-Code reviews made by me:
-
-https://github.com/LLumisS/Procedural-Map-Generation-Project/issues/2
-
-https://github.com/LLumisS/Procedural-Map-Generation-Project/issues/3
-
-https://github.com/LLumisS/Procedural-Map-Generation-Project/issues/4
-
-https://github.com/LLumisS/Procedural-Map-Generation-Project/issues/5
