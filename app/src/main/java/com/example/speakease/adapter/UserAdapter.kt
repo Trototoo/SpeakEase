@@ -37,5 +37,11 @@ class UserAdapter(private val userList: ArrayList<User>):
         }
     }
 
+    fun updateUsers(users: List<User>) {
+        userList.clear()
+        userList.addAll(users)
+        notifyDataSetChanged()
+    }
+
     override fun getItemCount(): Int = userList.size
 }

@@ -3,41 +3,25 @@ package com.example.speakease
 import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import com.example.speakease.Constants.IMAGE_PICK_REQUEST_CODE
-import com.example.speakease.Constants.PROFILE_PATH
-import com.example.speakease.Constants.USERS_PATH
 import com.example.speakease.databinding.ActivitySetupProfileBinding
-import com.example.speakease.model.User
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
-import java.util.Date
+import com.example.speakease.repositories.FirebaseRepository
 
 class SetupProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySetupProfileBinding
-    private lateinit var auth: FirebaseAuth
-    private lateinit var database: FirebaseDatabase
-    private lateinit var storage: FirebaseStorage
     private lateinit var dialog: ProgressDialog
     private var selectedImage: Uri? = null
+    private val repository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySetupProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initFirebase()
         setupUI()
-    }
-
-    private fun initFirebase() {
-        auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance()
-        storage = FirebaseStorage.getInstance()
     }
 
     private fun setupUI() {
@@ -48,29 +32,16 @@ class SetupProfileActivity : AppCompatActivity() {
             setCancelable(false)
         }
 
-        binding.imageView.setOnClickListener {
-            val intent = Intent().apply {
-                action = Intent.ACTION_GET_CONTENT
-                type = "image/*"
-            }
-            startActivityForResult(intent, IMAGE_PICK_REQUEST_CODE)
-        }
-
+        binding.imageView.setOnClickListener { pickImage() }
         binding.continueBtn02.setOnClickListener { updateProfile() }
     }
 
-    private fun uploadImage(reference: StorageReference, uri: Uri, onSuccess: (String) -> Unit) {
-        reference.putFile(uri).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                reference.downloadUrl.addOnCompleteListener { downloadUrlTask ->
-                    if (downloadUrlTask.isSuccessful) {
-                        val downloadUri = downloadUrlTask.result
-                        val imageUrl = downloadUri.toString()
-                        onSuccess(imageUrl)
-                    }
-                }
-            }
+    private fun pickImage() {
+        val intent = Intent().apply {
+            action = Intent.ACTION_GET_CONTENT
+            type = "image/*"
         }
+        startActivityForResult(intent, IMAGE_PICK_REQUEST_CODE)
     }
 
     private fun updateProfile() {
@@ -83,27 +54,24 @@ class SetupProfileActivity : AppCompatActivity() {
         dialog.show()
 
         selectedImage?.let {
-            val reference = storage.reference.child(PROFILE_PATH).child(auth.uid!!)
-            uploadImage(reference, it) { imageUrl ->
-                saveUserToFirebase(name, imageUrl)
-            }
-        } ?: run {
-            saveUserToFirebase(name, "No Image")
-        }
+            val reference = repository.getUserProfileImageReference()
+            repository.uploadImage(reference, it,
+                onSuccess = { imageUrl -> saveUserToFirebase(name, imageUrl) },
+                onFailure = { exception ->
+                    dialog.dismiss()
+                })
+        } ?: saveUserToFirebase(name, "No Image")
     }
 
     private fun saveUserToFirebase(name: String, imageUrl: String) {
-        val uid = auth.uid
-        val phone = auth.currentUser?.phoneNumber
-        val user = User(uid!!, name, phone, imageUrl)
-        database.reference
-            .child(USERS_PATH)
-            .child(uid)
-            .setValue(user)
-            .addOnCompleteListener {
+        repository.updateUserProfile(name, imageUrl,
+            onSuccess = {
                 dialog.dismiss()
                 navigateToMainActivity()
-            }
+            },
+            onFailure = { exception ->
+                dialog.dismiss()
+            })
     }
 
     private fun navigateToMainActivity() {
@@ -118,20 +86,8 @@ class SetupProfileActivity : AppCompatActivity() {
 
         if (requestCode == IMAGE_PICK_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.data != null) {
             val uri = data.data!!
-            val reference = storage.reference
-                .child(PROFILE_PATH)
-                .child("${Date().time}")
-
-            uploadImage(reference, uri) { imageUrl ->
-                val obj = HashMap<String, Any>()
-                obj["image"] = imageUrl
-                database.reference
-                    .child(USERS_PATH)
-                    .child(auth.uid!!)
-                    .updateChildren(obj)
-            }
-            binding.imageView.setImageURI(data.data)
-            selectedImage = data.data
+            binding.imageView.setImageURI(uri)
+            selectedImage = uri
         }
     }
 }

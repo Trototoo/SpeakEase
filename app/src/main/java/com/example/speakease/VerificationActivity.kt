@@ -1,9 +1,9 @@
 package com.example.speakease
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.speakease.databinding.ActivityVerificationBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.i18n.phonenumbers.NumberParseException
@@ -13,14 +13,12 @@ import com.google.i18n.phonenumbers.Phonenumber
 class VerificationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityVerificationBinding
-    private lateinit var auth: FirebaseAuth
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVerificationBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        auth = FirebaseAuth.getInstance()
 
         checkIfUserIsAlreadyLogged()
         hideActionBar()
@@ -43,7 +41,7 @@ class VerificationActivity : AppCompatActivity() {
         binding.continueBtn.setOnClickListener {
             val phoneNumber = binding.editNumber.text.toString()
             if (isValidPhoneNumber(phoneNumber)) {
-            navigateToOTPActivity(phoneNumber)
+                navigateToOTPActivity(phoneNumber)
             } else {
                 Toast.makeText(this, "Invalid phone number", Toast.LENGTH_SHORT).show()
             }
@@ -67,15 +65,11 @@ class VerificationActivity : AppCompatActivity() {
     private fun isValidPhoneNumber(phoneNumber: String): Boolean {
         val phoneUtil = PhoneNumberUtil.getInstance()
 
-        try {
-            // You should specify the region code.
-            // If you're not sure about the region, you can just use "ZZ".
+        return try {
             val numberProto: Phonenumber.PhoneNumber = phoneUtil.parse(phoneNumber, "ZZ")
-            return phoneUtil.isValidNumber(numberProto)
+            phoneUtil.isValidNumber(numberProto)
         } catch (e: NumberParseException) {
-            println("NumberParseException was thrown: $e")
+            false
         }
-
-        return false
     }
 }

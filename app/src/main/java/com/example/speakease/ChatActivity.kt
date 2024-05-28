@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -18,6 +19,7 @@ import com.example.speakease.Constants.USER_PRESENCE
 import com.example.speakease.adapter.MessagesAdapter
 import com.example.speakease.databinding.ActivityChatBinding
 import com.example.speakease.model.Message
+import com.example.speakease.repositories.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -34,11 +36,10 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messages: ArrayList<Message>
     private lateinit var senderRoom: String
     private lateinit var receiverRoom: String
-    private lateinit var database: FirebaseDatabase
-    private lateinit var storage: FirebaseStorage
     private lateinit var dialog: ProgressDialog
     private lateinit var senderUid: String
     private lateinit var receiverUid: String
+    private val repository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +54,6 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        database = FirebaseDatabase.getInstance()
-        storage = FirebaseStorage.getInstance()
         dialog = ProgressDialog(this).apply {
             setMessage("Uploading Image...")
             setCancelable(false)
@@ -101,71 +100,41 @@ class ChatActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                database.reference.child(USER_PRESENCE).child(senderUid).setValue("Typing...")
+                repository.setUserPresenceStatus("Typing...")
                 handler.removeCallbacksAndMessages(null)
-                handler.postDelayed({ database.reference.child(USER_PRESENCE).child(senderUid).setValue("Online") }, 1000)
+                handler.postDelayed({ repository.setUserPresenceStatus("Online") }, 1000)
             }
         }
     }
 
     private fun setPresenceStatus() {
-        database.reference.child(USER_PRESENCE).child(receiverUid)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.exists()) {
-                        val status = snapshot.getValue(String::class.java)
-                        binding.status.text = status
-                        binding.status.visibility = if (status == "Offline") View.GONE else View.VISIBLE
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
+        repository.setUserPresenceStatus("Online")
+        repository.getCurrentUser(
+            onSuccess = { user -> binding.status.visibility = View.VISIBLE; binding.status.text = user.status },
+            onError = { error -> binding.status.visibility = View.GONE }
+        )
     }
 
     private fun fetchAndSetChatMessages() {
-        database.reference.child(CHATS).child(senderRoom).child(MESSAGE)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    messages.clear()
-                    for (snapshot1 in snapshot.children) {
-                        val message = snapshot1.getValue(Message::class.java)!!
-                        message.messageId = snapshot1.key
-                        messages.add(message)
-                    }
-                    adapter.notifyDataSetChanged()
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
+        repository.getChatMessages(
+            senderRoom = senderRoom,
+            onSuccess = { messages ->
+                this.messages.clear()
+                this.messages.addAll(messages)
+                adapter.notifyDataSetChanged()
+            },
+            onError = { error -> Log.e("Error", error.message ?: "An error occurred") }
+        )
     }
 
     private fun sendMessage() {
-        var messageTxt = binding.messageBox.text.toString()
-
-        if (messageTxt.isEmpty()) {
-            return
-        }
-
-        messageTxt = messageTxt.trimEnd('\n')
-
+        val messageTxt = binding.messageBox.text.toString()
         val date = Date()
         val message = Message(messageTxt, senderUid, date.time)
 
         binding.messageBox.setText("")
 
-        val randomKey = database.reference.push().key!!
-        val lastMsgObj = mapOf("lastMsg" to message.message!!, "lastMsgTime" to date.time)
-
-        database.reference.child(CHATS).child(senderRoom).updateChildren(lastMsgObj)
-        database.reference.child(CHATS).child(receiverRoom).updateChildren(lastMsgObj)
-
-        database.reference.child(CHATS).child(senderRoom).child(MESSAGE).child(randomKey)
-            .setValue(message)
-            .addOnSuccessListener {
-                database.reference.child(CHATS).child(receiverRoom).child(MESSAGE).child(randomKey)
-                    .setValue(message)
-            }
+        repository.sendMessage(senderRoom, receiverRoom, message)
     }
 
     private fun pickImage() {
@@ -173,17 +142,17 @@ class ChatActivity : AppCompatActivity() {
             action = Intent.ACTION_GET_CONTENT
             type = "image/*"
         }
-        startActivityForResult(intent, IMAGE_PICK_REQUEST_CODE_CHAT)
+        startActivityForResult(intent, 25)
     }
 
     override fun onResume() {
         super.onResume()
-        database.reference.child(USER_PRESENCE).child(senderUid).setValue("Online")
+        setPresenceStatus()
     }
 
     override fun onPause() {
         super.onPause()
-        database.reference.child(USER_PRESENCE).child(senderUid).setValue("Offline")
+        repository.setUserPresenceStatus("Offline")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -191,41 +160,24 @@ class ChatActivity : AppCompatActivity() {
 
         if (requestCode == IMAGE_PICK_REQUEST_CODE_CHAT && resultCode == RESULT_OK) {
             val selectedImage = data?.data ?: return
-
-            val reference = storage.reference.child(CHATS)
-                .child(Calendar.getInstance().timeInMillis.toString())
-
+            val reference = repository.getChatImageReference()
             dialog.show()
 
-            reference.putFile(selectedImage).addOnCompleteListener { task ->
-                dialog.dismiss()
-
-                if (task.isSuccessful) {
-                    reference.downloadUrl.addOnSuccessListener { uri ->
-                        val filePath = uri.toString()
-
-                        val date = Date()
-                        val message = Message(MESSAGE_PHOTO, senderUid, date.time).apply {
-                            imageUrl = filePath
-                        }
-
-                        binding.messageBox.setText("")
-
-                        val randomKey = database.reference.push().key ?: return@addOnSuccessListener
-
-                        val lastMsgObj = mapOf("lastMsg" to message.message, "lastMsgTime" to date.time)
-
-                        database.reference.child(CHATS).updateChildren(lastMsgObj)
-                        database.reference.child(CHATS).child(receiverRoom).updateChildren(lastMsgObj)
-
-                        database.reference.child(CHATS).child(senderRoom).child(MESSAGE).child(randomKey)
-                            .setValue(message).addOnSuccessListener {
-                                database.reference.child(CHATS).child(receiverRoom).child(MESSAGE).child(randomKey)
-                                    .setValue(message)
-                            }
+            repository.uploadImage(reference, selectedImage,
+                onSuccess = { filePath ->
+                    dialog.dismiss()
+                    val date = Date()
+                    val message = Message(MESSAGE_PHOTO, senderUid, date.time).apply {
+                        imageUrl = filePath
                     }
-                }
-            }
+
+                    binding.messageBox.setText("")
+
+                    repository.sendMessage(senderRoom, receiverRoom, message)
+                },
+                onFailure = { exception ->
+                    dialog.dismiss()
+                })
         }
     }
 }
